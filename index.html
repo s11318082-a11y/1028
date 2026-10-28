@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>潮間帶補給所｜沿海養殖廢棄物再生高端品牌 Intertidal Supply Station</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- GSAP & ScrollTrigger & Draggable -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Draggable.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@600;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        marine: {
+                            foam: '#FAFDFF',
+                            ice: '#E8F9FF',
+                            cyan: '#00E5FF',
+                            coral: '#FF6B81',
+                            gold: '#FFD166',
+                            ocean: '#0284C7',
+                            navy: '#031B2E',
+                            deep: '#010D17',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans TC', 'sans-serif'],
+                        serif: ['Noto Serif TC', 'Playfair Display', 'serif'],
+                        enSerif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #FAFDFF;
+            color: #031B2E;
+            overflow-x: hidden;
+            cursor: default;
+        }
+
+        /* Fluid Jelly Custom Cursor */
+        #jelly-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #00E5FF, #0284C7);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.6);
+            transition: transform 0.08s ease-out, background 0.3s, border 0.3s;
+        }
+
+        body.cursor-hover #jelly-cursor {
+            width: 55px;
+            height: 55px;
+            background: rgba(0, 229, 255, 0.15);
+            border: 2px solid #00E5FF;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 0 25px rgba(0, 229, 255, 0.4);
+        }
+
+        /* Glassmorphism Refined */
+        .glass-nav {
+            background: rgba(250, 253, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 229, 255, 0.15);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(2, 132, 199, 0.12);
+            box-shadow: 0 10px 30px -10px rgba(2, 132, 199, 0.08);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(0, 229, 255, 0.6);
+            box-shadow: 0 20px 40px -10px rgba(0, 229, 255, 0.25);
+            transform: translateY(-6px) scale(1.01);
+        }
+
+        .text-marine-gradient {
+            background: linear-gradient(135deg, #031B2E 0%, #0284C7 50%, #00E5FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Background Canvas */
+        #ocean-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Draggable Sticker */
+        .draggable-sticker {
+            user-select: none;
+            cursor: grab;
+            transition: shadow 0.2s;
+        }
+        .draggable-sticker:active {
+            cursor: grabbing;
+            transform: scale(1.08) rotate(3deg);
+        }
+
+        /* Image Comparison Slider */
+        .comparison-slider {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1.5rem;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #FAFDFF; }
+        ::-webkit-scrollbar-thumb { background: #00E5FF; border-radius: 4px; }
+    </style>
+</head>
+<body class="relative selection:bg-marine-cyan selection:text-marine-navy">
+
+    <!-- JELLY CURSOR -->
+    <div id="jelly-cursor"></div>
+
+    <!-- INTERACTIVE OCEAN CANVAS -->
+    <canvas id="ocean-canvas"></canvas>
+
+    <!-- NAVIGATION BAR -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-nav transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="#" class="flex items-center gap-3 group magnetic-target">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-marine-navy via-marine-ocean to-marine-cyan flex items-center justify-center text-white shadow-lg group-hover:rotate-12 transition-transform duration-300">
+                    <i data-lucide="waves" class="w-6 h-6 text-white animate-pulse"></i>
+                </div>
+                <div>
+                    <span class="font-serif font-black text-xl tracking-wider text-marine-navy block leading-none">潮間帶補給所</span>
+                    <span class="text-[9px] tracking-widest text-marine-ocean uppercase font-sans mt-1 block font-bold">Intertidal Supply Station</span>
+                </div>
+            </a>
+
+            <div class="hidden md:flex items-center gap-8 text-xs font-bold tracking-wider uppercase text-slate-700">
+                <a href="#about" class="hover:text-marine-cyan transition-colors magnetic-target">品牌核心</a>
+                <a href="#transform" class="hover:text-marine-cyan transition-colors magnetic-target">再生滑桿</a>
+                <a href="#lab" class="hover:text-marine-cyan transition-colors magnetic-target">材料實驗室</a>
+                <a href="#portfolio" class="hover:text-marine-cyan transition-colors magnetic-target">實踐作品</a>
+                <a href="#shop" class="hover:text-marine-cyan transition-colors magnetic-target">永續選品</a>
+                <a href="#quiz" class="hover:text-marine-cyan transition-colors magnetic-target">潮性測驗</a>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onclick="toggleCartModal()" class="relative p-3 rounded-2xl bg-marine-ice border border-marine-cyan/30 text-marine-navy hover:bg-marine-cyan hover:text-white transition-all magnetic-target">
+                    <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                    <span id="cart-count" class="absolute -top-1.5 -right-1.5 bg-marine-coral text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-md scale-0 transition-transform">0</span>
+                </button>
+                
+                <a href="#contact" class="hidden sm:inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-marine-navy to-marine-ocean text-white font-bold text-xs tracking-wider uppercase hover:shadow-lg hover:scale-105 transition-all magnetic-target">
+                    <span>聯絡我們</span>
+                    <i data-lucide="sparkles" class="w-4 h-4 text-marine-cyan"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section id="about" class="relative min-h-screen flex items-center justify-center pt-32 pb-20 px-6 overflow-hidden">
+        
+        <!-- DRAGGABLE PLAYFUL STICKERS -->
+        <div class="draggable-sticker absolute top-28 left-8 z-20 hidden lg:flex items-center gap-2 px-4 py-2 rounded-full bg-marine-gold text-marine-navy font-black text-xs shadow-xl rotate-[-6deg]">
+            <i data-lucide="recycle" class="w-4 h-4"></i> 拖拖我！100% 沿海海廢轉化
+        </div>
+        <div class="draggable-sticker absolute bottom-24 right-12 z-20 hidden lg:flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-marine-coral text-white font-black text-xs shadow-xl rotate-[8deg]">
+            <i data-lucide="anchor" class="w-4 h-4"></i> 潮汐補給特遣隊 🌊
+        </div>
+
+        <div class="max-w-5xl mx-auto text-center space-y-10 relative z-10">
+            <!-- Dynamic Tide Live Indicator -->
+            <div class="inline-flex items-center gap-3 px-6 py-2.5 rounded-full bg-white/90 border-2 border-marine-cyan shadow-lg text-xs font-bold text-marine-navy">
+                <span class="w-3 h-3 rounded-full bg-marine-cyan animate-ping"></span>
+                <span>今日潮潮動態：滿潮階段 🌊 嘉義布袋海岸蚵殼採集任務完成 (+850KG)</span>
+            </div>
+
+            <div class="space-y-6">
+                <h1 class="font-serif text-4xl sm:text-6xl md:text-7xl font-black text-marine-navy leading-[1.15]">
+                    讓海洋養殖廢棄物 <br/>
+                    重返世代<span class="text-marine-gradient font-enSerif italic">潮流浪潮</span>
+                </h1>
+                <p class="max-w-2xl mx-auto text-slate-600 text-base sm:text-lg font-medium leading-relaxed">
+                    我們是《潮間帶補給所》——不賣盲目環保情懷，只用<span class="text-marine-ocean font-bold">田野調查</span>、<span class="text-marine-coral font-bold">極限材料實驗</span>與<span class="text-marine-cyan font-bold">高端潮牌美學</span>，把海岸髒亂遺留問題，調配成頂級生活精品！
+                </p>
+            </div>
+
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+                <a href="#transform" class="w-full sm:w-auto px-9 py-4 rounded-2xl bg-marine-navy text-white font-extrabold text-xs tracking-widest uppercase hover:bg-marine-ocean hover:shadow-2xl hover:scale-105 transition-all flex items-center justify-center gap-3 magnetic-target">
+                    <span>體驗廢棄物變身滑桿</span>
+                    <i data-lucide="arrow-down" class="w-4 h-4 text-marine-cyan animate-bounce"></i>
+                </a>
+                <a href="#shop" class="w-full sm:w-auto px-9 py-4 rounded-2xl bg-white border-2 border-marine-cyan text-marine-navy font-extrabold text-xs tracking-widest uppercase hover:bg-marine-ice hover:shadow-xl transition-all flex items-center justify-center gap-3 magnetic-target">
+                    <span>選購永續潮物</span>
+                    <i data-lucide="shopping-bag" class="w-4 h-4 text-marine-coral"></i>
+                </a>
+            </div>
+
+            <!-- Stats Showcase -->
+            <div class="pt-12 grid grid-cols-2 md:grid-cols-4 gap-6 text-left">
+                <div class="glass-card p-6 rounded-3xl border-b-4 border-b-marine-cyan">
+                    <div class="font-enSerif text-3xl font-black text-marine-navy">1,850 <span class="text-xs font-sans text-marine-ocean">KG</span></div>
+                    <div class="text-xs font-bold text-slate-500 mt-1">回收廢蚵殼與海廢網</div>
+                </div>
+                <div class="glass-card p-6 rounded-3xl border-b-4 border-b-marine-coral">
+                    <div class="font-enSerif text-3xl font-black text-marine-navy">24 <span class="text-xs font-sans text-marine-coral">TYPES</span></div>
+                    <div class="text-xs font-bold text-slate-500 mt-1">獨家海洋複合配方</div>
+                </div>
+                <div class="glass-card p-6 rounded-3xl border-b-4 border-b-marine-gold">
+                    <div class="font-enSerif text-3xl font-black text-marine-navy">42 <span class="text-xs font-sans text-marine-gold">CASES</span></div>
+                    <div class="text-xs font-bold text-slate-500 mt-1">跨界策展與 ESG 專案</div>
+                </div>
+                <div class="glass-card p-6 rounded-3xl border-b-4 border-b-marine-navy">
+                    <div class="font-enSerif text-3xl font-black text-marine-navy">100% <span class="text-xs font-sans text-marine-navy">LOCAL</span></div>
+                    <div class="text-xs font-bold text-slate-500 mt-1">台灣在地極致工藝</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: INTERACTIVE TRASH-TO-LUXURY SLIDER -->
+    <section id="transform" class="py-24 px-6 relative bg-marine-ice/50">
+        <div class="max-w-5xl mx-auto space-y-10">
+            <div class="text-center space-y-3">
+                <span class="px-4 py-1.5 rounded-full bg-marine-cyan/20 text-marine-ocean text-xs font-black tracking-widest uppercase">Before & After Transformation</span>
+                <h2 class="font-serif text-3xl sm:text-5xl font-black text-marine-navy">廢棄物變身互動對比</h2>
+                <p class="text-slate-600 text-xs sm:text-sm">左右拖動下方水波滑桿，親眼見證從海岸遺留廢棄物到奢華磨石子板材的蛻變！</p>
+            </div>
+
+            <!-- Comparison Slider Component -->
+            <div class="comparison-slider max-w-4xl mx-auto h-[380px] sm:h-[480px] shadow-2xl border-4 border-white relative select-none">
+                <!-- After Image (High End Material) -->
+                <img src="https://images.unsplash.com/photo-1615529182904-14819c35db37?auto=format&fit=crop&w=1200&q=80" class="absolute inset-0 w-full h-full object-cover">
+                <span class="absolute top-6 right-6 px-4 py-2 rounded-xl bg-marine-navy/90 text-marine-cyan font-bold text-xs backdrop-blur">AFTER: 潮汐磨石子精品板材</span>
+
+                <!-- Before Image (Dirty Oyster Shells / Trash) Overlay -->
+                <div id="before-overlay" class="absolute inset-0 w-1/2 overflow-hidden border-r-4 border-marine-cyan shadow-2xl">
+                    <img src="https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=1200&q=80" class="absolute inset-0 max-w-none w-full h-full object-cover" id="before-img">
+                    <span class="absolute top-6 left-6 px-4 py-2 rounded-xl bg-marine-coral/90 text-white font-bold text-xs backdrop-blur">BEFORE: 沿海棄置廢蚵殼與垃圾</span>
+                </div>
+
+                <!-- Range Control Handle -->
+                <input type="range" min="0" max="100" value="50" id="slider-range" oninput="updateSlider(this.value)" class="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-30">
+                <div id="slider-handle" class="absolute top-0 bottom-0 left-1/2 -ml-5 w-10 flex items-center justify-center pointer-events-none z-20">
+                    <div class="w-10 h-10 rounded-full bg-marine-cyan text-marine-navy shadow-2xl flex items-center justify-center font-bold">
+                        <i data-lucide="chevrons-left-right" class="w-5 h-5"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: MATERIAL RECIPE LAB (互動調配實驗室) -->
+    <section id="lab" class="py-24 px-6 relative">
+        <div class="max-w-7xl mx-auto space-y-16">
+            <div class="text-center max-w-3xl mx-auto space-y-4">
+                <span class="px-4 py-1 rounded-full bg-marine-coral/20 text-marine-coral text-xs font-black uppercase">Recipe Synthesizer</span>
+                <h2 class="font-serif text-3xl sm:text-5xl font-black text-marine-navy">互動材料調配實驗室</h2>
+                <p class="text-slate-600 text-xs sm:text-sm">點擊下方原料進行混合，觀察即時生成的物理強度與減碳影響力數值！</p>
+            </div>
+
+            <div class="glass-card p-8 md:p-12 rounded-3xl border-2 border-marine-cyan/30 shadow-2xl">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    
+                    <!-- Recipe Controls -->
+                    <div class="space-y-6">
+                        <h3 class="font-serif text-2xl font-bold text-marine-navy">選擇調配成分：</h3>
+                        <div class="grid grid-cols-3 gap-4">
+                            <button onclick="mixIngredient('oyster')" id="btn-oyster" class="recipe-btn active p-4 rounded-2xl border-2 border-marine-cyan bg-marine-ice text-center transition-all hover:scale-105">
+                                <div class="text-2xl mb-1">🦪</div>
+                                <div class="text-xs font-bold text-marine-navy">煅燒蚵殼粉</div>
+                            </button>
+                            <button onclick="mixIngredient('net')" id="btn-net" class="recipe-btn p-4 rounded-2xl border-2 border-slate-200 bg-white text-center transition-all hover:scale-105">
+                                <div class="text-2xl mb-1">🕸️</div>
+                                <div class="text-xs font-bold text-marine-navy">解聚海廢漁網</div>
+                            </button>
+                            <button onclick="mixIngredient('buoy')" id="btn-buoy" class="recipe-btn p-4 rounded-2xl border-2 border-slate-200 bg-white text-center transition-all hover:scale-105">
+                                <div class="text-2xl mb-1">🟡</div>
+                                <div class="text-xs font-bold text-marine-navy">改質塑膠浮球</div>
+                            </button>
+                        </div>
+
+                        <!-- Live Formula Gauge Bars -->
+                        <div class="space-y-4 pt-4 border-t border-slate-200">
+                            <div>
+                                <div class="flex justify-between text-xs font-bold text-marine-navy mb-1">
+                                    <span>耐磨強度 (MPa)</span>
+                                    <span id="stat-psi" class="text-marine-ocean">95 MPa</span>
+                                </div>
+                                <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                                    <div id="bar-psi" class="h-full bg-gradient-to-r from-marine-ocean to-marine-cyan transition-all duration-500" style="width: 80%;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-bold text-marine-navy mb-1">
+                                    <span>減碳效益 (CO2 Reduction)</span>
+                                    <span id="stat-co2" class="text-marine-coral">-72%</span>
+                                </div>
+                                <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                                    <div id="bar-co2" class="h-full bg-gradient-to-r from-marine-coral to-marine-gold transition-all duration-500" style="width: 72%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Material Live Display Visualizer -->
+                    <div id="recipe-display" class="h-80 rounded-3xl p-8 flex flex-col justify-between text-white transition-all duration-500 shadow-2xl relative overflow-hidden" style="background: linear-gradient(135deg, #031B2E, #0284C7);">
+                        <div class="flex justify-between items-center z-10">
+                            <span id="display-tag" class="px-3 py-1 rounded-full bg-white/20 text-[10px] font-mono font-bold">FORMULA-A1</span>
+                            <span class="text-xs font-bold text-marine-cyan flex items-center gap-1"><i data-lucide="check-circle" class="w-4 h-4"></i> 合成成功</span>
+                        </div>
+                        <div class="space-y-2 z-10">
+                            <h4 id="display-title" class="font-serif text-2xl sm:text-3xl font-black">極致白蚵殼磨石磚</h4>
+                            <p id="display-desc" class="text-xs text-slate-200 leading-relaxed">高溫煅燒去味蚵殼微粉，擁有大理石般溫潤觸感與清爽白皙紋理。</p>
+                        </div>
+                        <div class="z-10 flex items-center justify-between text-xs pt-4 border-t border-white/20">
+                            <span>適用領域：高級室內裝修 / 潮牌桌上飾品</span>
+                            <button onclick="triggerConfetti()" class="px-4 py-1.5 rounded-full bg-marine-cyan text-marine-navy font-bold hover:bg-white transition-all">測試聲響 🎵</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: PORTFOLIO & CASE STUDIES -->
+    <section id="portfolio" class="py-24 px-6 relative bg-marine-ice/30">
+        <div class="max-w-7xl mx-auto space-y-12">
+            <div class="text-center space-y-3">
+                <span class="text-marine-ocean text-xs font-bold tracking-widest uppercase">Cases & Projects</span>
+                <h2 class="font-serif text-3xl sm:text-5xl font-black text-marine-navy">精選實踐專案</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Project 1 -->
+                <div class="glass-card rounded-3xl overflow-hidden group cursor-pointer" onclick="alert('《潮汐之痕》作品展演：全台首座採用 100% 再生蚵殼磚構建的地景藝術。')">
+                    <div class="h-64 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                        <span class="absolute top-4 left-4 px-3 py-1 bg-marine-navy text-white text-xs font-bold rounded-full">地景策展</span>
+                    </div>
+                    <div class="p-6 space-y-2">
+                        <h3 class="font-serif font-bold text-lg text-marine-navy group-hover:text-marine-ocean">《潮汐之痕》永續藝術裝置</h3>
+                        <p class="text-xs text-slate-500">回收嘉義沿海 750kg 蚵殼，打造海岸地景地標。</p>
+                    </div>
+                </div>
+
+                <!-- Project 2 -->
+                <div class="glass-card rounded-3xl overflow-hidden group cursor-pointer" onclick="alert('科技品牌專屬禮盒：將上市企業淨灘回收物客製化為高階桌上擺飾。')">
+                    <div class="h-64 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                        <span class="absolute top-4 left-4 px-3 py-1 bg-marine-coral text-white text-xs font-bold rounded-full">ESG 企業客製</span>
+                    </div>
+                    <div class="p-6 space-y-2">
+                        <h3 class="font-serif font-bold text-lg text-marine-navy group-hover:text-marine-ocean">科技企業海洋永續禮盒</h3>
+                        <p class="text-xs text-slate-500">為上市科技集團打造兼具永續故事與質感的精品禮盒。</p>
+                    </div>
+                </div>
+
+                <!-- Project 3 -->
+                <div class="glass-card rounded-3xl overflow-hidden group cursor-pointer" onclick="alert('海廢漁網建材專案：將廢棄尼龍網轉換為高抗壓飾面板材。')">
+                    <div class="h-64 overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                        <span class="absolute top-4 left-4 px-3 py-1 bg-marine-cyan text-marine-navy text-xs font-bold rounded-full">專利研發</span>
+                    </div>
+                    <div class="p-6 space-y-2">
+                        <h3 class="font-serif font-bold text-lg text-marine-navy group-hover:text-marine-ocean">廢棄漁網建築外牆飾板</h3>
+                        <p class="text-xs text-slate-500">具備高耐候性與耐鹽霧特性的永續建築新材。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: SUSTAINABLE STORE (下單購買) -->
+    <section id="shop" class="py-24 px-6 relative">
+        <div class="max-w-7xl mx-auto space-y-12">
+            <div class="text-center space-y-3">
+                <span class="px-4 py-1.5 rounded-full bg-marine-gold/20 text-marine-navy text-xs font-black uppercase">Eco Store</span>
+                <h2 class="font-serif text-3xl sm:text-5xl font-black text-marine-navy">潮間帶永續選品</h2>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Item 1 -->
+                <div class="glass-card p-6 rounded-3xl flex flex-col justify-between space-y-4">
+                    <div class="h-60 rounded-2xl bg-white overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1615529182904-14819c35db37?auto=format&fit=crop&w=600&q=80" class="w-full h-full object-cover">
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-serif font-bold text-marine-navy">潮汐磨石子吸水杯墊</h3>
+                            <span class="text-marine-ocean font-extrabold">NT$ 680</span>
+                        </div>
+                        <p class="text-xs text-slate-500">含 120g 回收蚵殼微粉，極速吸水微晶質感。</p>
+                    </div>
+                    <button onclick="addToCart('潮汐磨石子吸水杯墊', 680)" class="w-full py-3.5 rounded-2xl bg-marine-navy text-white font-bold text-xs hover:bg-marine-cyan hover:text-marine-navy transition-all">
+                        + 加入購物車
+                    </button>
+                </div>
+
+                <!-- Item 2 -->
+                <div class="glass-card p-6 rounded-3xl flex flex-col justify-between space-y-4">
+                    <div class="h-60 rounded-2xl bg-white overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=600&q=80" class="w-full h-full object-cover">
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-serif font-bold text-marine-navy">深海浮光氣氛燈</h3>
+                            <span class="text-marine-ocean font-extrabold">NT$ 2,480</span>
+                        </div>
+                        <p class="text-xs text-slate-500">廢漁網編織透光紋理，投射水波盪漾光影。</p>
+                    </div>
+                    <button onclick="addToCart('深海浮光氣氛燈', 2480)" class="w-full py-3.5 rounded-2xl bg-marine-navy text-white font-bold text-xs hover:bg-marine-cyan hover:text-marine-navy transition-all">
+                        + 加入購物車
+                    </button>
+                </div>
+
+                <!-- Item 3 -->
+                <div class="glass-card p-6 rounded-3xl flex flex-col justify-between space-y-4">
+                    <div class="h-60 rounded-2xl bg-white overflow-hidden relative">
+                        <img src="https://images.unsplash.com/photo-1538688525198-9b88f6f53126?auto=format&fit=crop&w=600&q=80" class="w-full h-full object-cover">
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-serif font-bold text-marine-navy">海岸波紋整理盤</h3>
+                            <span class="text-marine-ocean font-extrabold">NT$ 1,120</span>
+                        </div>
+                        <p class="text-xs text-slate-500">回收海廢浮球改質，不規則有機海洋波紋。</p>
+                    </div>
+                    <button onclick="addToCart('海岸波紋整理盤', 1120)" class="w-full py-3.5 rounded-2xl bg-marine-navy text-white font-bold text-xs hover:bg-marine-cyan hover:text-marine-navy transition-all">
+                        + 加入購物車
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: TIDAL QUIZ (潮性測驗小遊戲) -->
+    <section id="quiz" class="py-24 px-6 relative bg-marine-ice/40">
+        <div class="max-w-3xl mx-auto glass-card p-8 sm:p-12 rounded-3xl text-center space-y-8 border-2 border-marine-cyan/40">
+            <div class="space-y-2">
+                <span class="text-marine-coral font-bold text-xs tracking-widest uppercase">Interactive Quiz</span>
+                <h2 class="font-serif text-3xl font-black text-marine-navy">測測你的「潮間帶海洋屬性」</h2>
+                <p class="text-xs text-slate-600">簡單選擇 1 個情境，為你推薦專屬的海洋永續配件！</p>
+            </div>
+
+            <div class="space-y-4 text-left" id="quiz-box">
+                <p class="font-bold text-sm text-marine-navy">Q. 當你走在海岸邊，最吸引你目光的是？</p>
+                <button onclick="answerQuiz('A')" class="w-full p-4 rounded-2xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:border-marine-cyan hover:bg-marine-ice transition-all flex items-center gap-3">
+                    <span>🦪 A. 海浪沖刷後閃閃發光的貝殼與蚵殼碎片</span>
+                </button>
+                <button onclick="answerQuiz('B')" class="w-full p-4 rounded-2xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:border-marine-cyan hover:bg-marine-ice transition-all flex items-center gap-3">
+                    <span>🌊 B. 隨波波光粼粼、折射陽光的海面線條</span>
+                </button>
+            </div>
+
+            <div id="quiz-result" class="hidden space-y-4">
+                <div class="text-3xl">🎉</div>
+                <h3 id="quiz-result-title" class="font-serif font-black text-2xl text-marine-navy">屬性：質樸蚵殼守護者</h3>
+                <p id="quiz-result-desc" class="text-xs text-slate-600">你擁有沉穩且關注細節的特質，最適合「潮汐磨石子吸水杯墊」！</p>
+                <button onclick="resetQuiz()" class="px-6 py-2.5 rounded-full bg-marine-navy text-white text-xs font-bold">重新測試</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTACT SECTION -->
+    <section id="contact" class="py-24 px-6 bg-marine-navy text-white relative">
+        <div class="max-w-5xl mx-auto text-center space-y-8">
+            <h2 class="font-serif text-3xl sm:text-5xl font-black">準備好與我們一起浪潮再生？</h2>
+            <p class="text-slate-300 text-xs sm:text-sm max-w-xl mx-auto">歡迎企業材料研發、ESG 禮品採購與展演合作，讓我們一起重塑海岸質感。</p>
+            <form onsubmit="event.preventDefault(); triggerConfetti(); alert('需求已順利送出！我們將儘快聯絡您。');" class="max-w-md mx-auto space-y-3">
+                <input type="text" placeholder="您的姓名 / 單位" required class="w-full px-4 py-3.5 rounded-2xl bg-white/10 border border-white/20 text-white text-xs focus:outline-none focus:border-marine-cyan">
+                <input type="email" placeholder="Email" required class="w-full px-4 py-3.5 rounded-2xl bg-white/10 border border-white/20 text-white text-xs focus:outline-none focus:border-marine-cyan">
+                <button type="submit" class="w-full py-4 rounded-2xl bg-marine-cyan text-marine-navy font-black text-xs uppercase hover:bg-white transition-all">送出合作需求 🚀</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="py-8 bg-marine-deep text-slate-400 text-xs text-center border-t border-white/10">
+        © 2026 潮間帶補給所 Intertidal Supply Station. All rights reserved.
+    </footer>
+
+    <!-- CART MODAL -->
+    <div id="cart-modal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm hidden">
+        <div class="fixed top-0 right-0 h-full w-full max-w-md bg-white p-6 flex flex-col justify-between shadow-2xl">
+            <div>
+                <div class="flex justify-between items-center pb-4 border-b">
+                    <h3 class="font-serif font-bold text-marine-navy text-lg">補給選品車</h3>
+                    <button onclick="toggleCartModal()" class="text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                <div id="cart-items" class="py-6 space-y-3">
+                    <div class="text-center text-xs text-slate-400 py-10">購物車目前是空的</div>
+                </div>
+            </div>
+            <div class="border-t pt-4 space-y-3">
+                <div class="flex justify-between font-bold text-marine-navy">
+                    <span>總計</span>
+                    <span id="cart-total" class="text-marine-ocean">NT$ 0</span>
+                </div>
+                <button onclick="triggerConfetti(); alert('感謝購買！'); cart=[]; updateCart(); toggleCartModal();" class="w-full py-4 rounded-2xl bg-marine-navy text-white font-bold text-xs uppercase">結帳</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        gsap.registerPlugin(ScrollTrigger, Draggable);
+
+        /* Fluid Jelly Cursor */
+        const jelly = document.getElementById('jelly-cursor');
+        let mouseX = 0, mouseY = 0, curX = 0, curY = 0;
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX; mouseY = e.clientY;
+        });
+        function renderCursor() {
+            let dx = mouseX - curX, dy = mouseY - curY;
+            curX += dx * 0.2; curY += dy * 0.2;
+            let vel = Math.sqrt(dx*dx + dy*dy);
+            let scale = Math.min(vel * 0.005, 0.5);
+            let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            jelly.style.transform = `translate(${curX}px, ${curY}px) translate(-50%, -50%) rotate(${angle}deg) scale(${1 + scale}, ${1 - scale})`;
+            requestAnimationFrame(renderCursor);
+        }
+        renderCursor();
+
+        /* Draggable Stickers */
+        Draggable.create(".draggable-sticker", { type: "x,y", edgeResistance: 0.65, bounds: "body" });
+
+        /* Interactive Ocean Canvas */
+        const canvas = document.getElementById('ocean-canvas');
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+        window.addEventListener('resize', () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; });
+
+        let bubbles = Array.from({length: 25}, () => ({
+            x: Math.random() * width, y: Math.random() * height,
+            r: Math.random() * 6 + 2, speed: Math.random() * 1 + 0.5
+        }));
+
+        function drawOcean() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = "rgba(0, 229, 255, 0.15)";
+            bubbles.forEach(b => {
+                b.y -= b.speed;
+                if(b.y < -10) b.y = height + 10;
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            requestAnimationFrame(drawOcean);
+        }
+        drawOcean();
+
+        /* Comparison Slider Handle */
+        function updateSlider(val) {
+            document.getElementById('before-overlay').style.width = val + '%';
+            document.getElementById('slider-handle').style.left = val + '%';
+        }
+
+        /* Material Lab Recipe Mixer */
+        const recipeData = {
+            oyster: { title: '極致白蚵殼磨石磚', desc: '高溫煅燒去味蚵殼微粉，擁有大理石般溫潤觸感與清爽白皙紋理。', psi: 95, co2: 72, color: 'linear-gradient(135deg, #031B2E, #0284C7)' },
+            net: { title: '深海尼龍編織透光板', desc: '解聚海廢漁網交織，強韌抗拉伸，呈現夢幻水波透色風采。', psi: 120, co2: 85, color: 'linear-gradient(135deg, #0284C7, #00E5FF)' },
+            buoy: { title: '海岸陽光不規則置物盤', desc: '改質浮球塑料，具備極高韌度與大地黃銅質感。', psi: 85, co2: 65, color: 'linear-gradient(135deg, #FF6B81, #FFD166)' }
+        };
+
+        function mixIngredient(type) {
+            document.querySelectorAll('.recipe-btn').forEach(b => {
+                b.classList.remove('border-marine-cyan', 'bg-marine-ice');
+                b.classList.add('border-slate-200', 'bg-white');
+            });
+            document.getElementById('btn-' + type).classList.add('border-marine-cyan', 'bg-marine-ice');
+
+            const data = recipeData[type];
+            document.getElementById('display-title').innerText = data.title;
+            document.getElementById('display-desc').innerText = data.desc;
+            document.getElementById('stat-psi').innerText = data.psi + ' MPa';
+            document.getElementById('bar-psi').style.width = (data.psi / 150 * 100) + '%';
+            document.getElementById('stat-co2').innerText = '-' + data.co2 + '%';
+            document.getElementById('bar-co2').style.width = data.co2 + '%';
+            document.getElementById('recipe-display').style.background = data.color;
+        }
+
+        /* Cart Logic */
+        let cart = [];
+        function addToCart(title, price) {
+            cart.push({ title, price });
+            updateCart();
+            triggerConfetti();
+            toggleCartModal(true);
+        }
+        function updateCart() {
+            document.getElementById('cart-count').innerText = cart.length;
+            document.getElementById('cart-count').classList.toggle('scale-0', cart.length === 0);
+            const container = document.getElementById('cart-items');
+            if(cart.length === 0) {
+                container.innerHTML = '<div class="text-center text-xs text-slate-400 py-10">購物車目前是空的</div>';
+            } else {
+                container.innerHTML = cart.map(i => `<div class="flex justify-between text-xs font-bold text-marine-navy"><span>${i.title}</span><span class="text-marine-ocean">NT$ ${i.price}</span></div>`).join('');
+            }
+            document.getElementById('cart-total').innerText = 'NT$ ' + cart.reduce((a,b)=>a+b.price, 0);
+        }
+        function toggleCartModal(show = false) {
+            document.getElementById('cart-modal').classList.toggle('hidden', !show);
+        }
+
+        /* Quiz Logic */
+        function answerQuiz(option) {
+            document.getElementById('quiz-box').classList.add('hidden');
+            document.getElementById('quiz-result').classList.remove('hidden');
+            if(option === 'B') {
+                document.getElementById('quiz-result-title').innerText = '屬性：流光波紋探索者';
+                document.getElementById('quiz-result-desc').innerText = '你富有想像力且熱愛生活儀式感，推薦「深海浮光氣氛燈」！';
+            }
+        }
+        function resetQuiz() {
+            document.getElementById('quiz-box').classList.remove('hidden');
+            document.getElementById('quiz-result').classList.add('hidden');
+        }
+
+        function triggerConfetti() {
+            confetti({ particleCount: 70, spread: 60, origin: { y: 0.7 } });
+        }
+    </script>
+</body>
+</html>
